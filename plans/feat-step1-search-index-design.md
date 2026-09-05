@@ -52,15 +52,28 @@ Step 2（インジェストパイプライン）で実データに対して比�
   として構築する関数 `build_search_index(index_name: str) -> SearchIndex`
 - `tests/test_index_schema.py`: フィールド構成・型・ベクトル次元数・セマンティック設定を検証する単体テスト
   （Azure資格情報不要、オブジェクト構築のみを検証）
+- `src/config.py`: `.env` からAzure OpenAI / AI Search / Cosmos DB の接続設定を読み込むヘルパー
+- `scripts/verify_azure_connectivity.py`: 3サービスへの実疎通確認スクリプト
+  （エンドポイント・キーの値は一切標準出力しない）
 
 ## 動作確認方法
 
 ```bash
 uv run pytest tests/test_index_schema.py -v
+uv run python scripts/verify_azure_connectivity.py  # 要 .env
 ```
 
-## 未確認・後続ステップに委ねる事項
+## 実リソースでの検証結果（2026-09-06）
 
-- 実際のAzure AI Searchリソースへの `create_or_update_index` 実行と動作確認は、
-  サブスクリプション準備後に実施する
+Azureサブスクリプションの準備が整い、実リソースに対して検証済み。
+
+- Azure AI Search: `erp-knowledge-index` を実際に `create_or_update_index` し、11フィールドで作成成功
+- Azure OpenAI: 埋め込み生成・チャット応答ともに成功。埋め込みモデルは当初
+  `text-embedding-3-small`（1536次元）しかデプロイされておらず、スキーマの3072次元と不一致が
+  発覚 → `text-embedding-3-large` を追加デプロイして解消。チャットは `gpt-4o` ではなく
+  `gpt-4.1-mini-1` というデプロイ名（クォータ制約により選択肢が限られたため）
+- Azure Cosmos DB: `erp-navigator` データベース / `sessions` コンテナの作成に成功
+- リージョンは全リソースとも Japan East で統一
+
+**教訓**: `.env` 手動転記時に値へ変数名を二重に含めてしまうミス（`AZURE_OPENAI_ENDPOINT=AZURE_OPENAI_ENDPOINT=https://...`）が発生した。埋め込み/チャット両方が同時に失敗する場合はデプロイ名よりも先にエンドポイント自体を疑うべき、という点は後続ステップでも留意する。
 - チャンク分割方針ごとの精度差の実測は Step 6（golden_qa評価）で行う
