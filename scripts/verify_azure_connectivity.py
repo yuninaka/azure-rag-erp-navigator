@@ -50,6 +50,14 @@ def check_azure_openai() -> None:
 
 
 def check_azure_search() -> None:
+    """接続確認と同時に、コード側のインデックス定義を実リソースへ同期する。
+
+    単なる疎通確認であれば get_index による存在確認で十分だが、本スクリプトは
+    「コードのスキーマ定義を単一の真実源とし、実行するたびに実インデックスへ反映する」
+    ことを意図した設計にしている（Step 1 実装時からの方針。
+    plans/feat-step1-search-index-design.md 参照）。スキーマを変更せずに疎通だけを
+    確認したい場合は、このスクリプトではなく get_index を直接呼び出すこと。
+    """
     config = load_azure_search_config()
     client = SearchIndexClient(config.endpoint, AzureKeyCredential(config.api_key))
 

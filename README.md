@@ -21,7 +21,7 @@ flowchart TB
 
     subgraph AOAI["Azure OpenAI Service"]
         Embed["text-embedding-3-large<br/>(クエリ埋め込み)"]
-        GPT["GPT-4o<br/>(回答生成)"]
+        GPT["gpt-4.1-mini<br/>(回答生成、コスト効率重視で採用)"]
     end
 
     subgraph Search["Azure AI Search"]
@@ -56,6 +56,9 @@ flowchart TB
     Docs --> Chunk --> EmbedBatch -->|投入| Index
 ```
 
+> 回答生成モデルは `gpt-4o` ではなく `gpt-4.1-mini` を採用している（コスト効率を優先した選定。
+> 検証結果は `plans/` 配下の各ステップの計画ファイルを参照）。
+
 ## ディレクトリ構成
 
 ```
@@ -75,8 +78,8 @@ azure-rag-erp-navigator/
 
 ## 進捗ロードマップ
 
-- [ ] Step 1: Azure AI Search インデックス設計（チャンク分割方針・メタデータスキーマ・ハイブリッド検索設定）
-- [ ] Step 2: ダミー業務文書のチャンク化・埋め込み生成・インデックス投入パイプライン
+- [x] Step 1: Azure AI Search インデックス設計（チャンク分割方針・メタデータスキーマ・ハイブリッド検索設定）
+- [x] Step 2: ダミー業務文書のチャンク化・埋め込み生成・インデックス投入パイプライン
 - [ ] Step 3: Cosmos DB での会話履歴・セッション管理
 - [ ] Step 4: RAG 回答生成ロジック（引用元提示含む）
 - [ ] Step 5: Streamlit チャットUI
