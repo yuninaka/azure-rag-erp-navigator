@@ -82,7 +82,7 @@ azure-rag-erp-navigator/
 - [x] Step 2: ダミー業務文書のチャンク化・埋め込み生成・インデックス投入パイプライン
 - [x] Step 3: Cosmos DB での会話履歴・セッション管理
 - [x] Step 4: RAG 回答生成ロジック（引用元提示含む）
-- [ ] Step 5: Streamlit チャットUI
+- [x] Step 5: Streamlit チャットUI
 - [ ] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
 - [ ] Step 7: Azure App Service デプロイ + GitHub Actions CI/CD
 - [ ] Step 8: Bicep による IaC 化
@@ -107,6 +107,16 @@ uv sync
 ### 環境変数
 
 `.env.example` をコピーして `.env` を作成し、Azure リソースの接続情報を設定してください（詳細は各ステップ実装時に追記）。
+
+### チャットUIの起動
+
+Azure OpenAI / AI Search / Cosmos DB への接続情報を `.env` に設定した上で、以下を実行してください。
+
+```bash
+uv run streamlit run src/app/streamlit_app.py
+```
+
+ブラウザで http://localhost:8501 が開き、ERPNaviについて質問できます。
 
 ```bash
 cp .env.example .env
