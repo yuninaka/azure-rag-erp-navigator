@@ -83,7 +83,7 @@ azure-rag-erp-navigator/
 - [x] Step 3: Cosmos DB での会話履歴・セッション管理
 - [x] Step 4: RAG 回答生成ロジック（引用元提示含む）
 - [x] Step 5: Streamlit チャットUI
-- [ ] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
+- [x] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
 - [ ] Step 7: Azure App Service デプロイ + GitHub Actions CI/CD
 - [ ] Step 8: Bicep による IaC 化
 - [ ] Zenn記事下書き・README整備
