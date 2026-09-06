@@ -15,8 +15,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=2.3.1",
     "pytest>=8.0",
     "ruff>=0.6",
+    "types-pyyaml>=6.0.12.20260906",
+    "vulture>=2.16",
 ]
 
 [tool.pytest.ini_options]
@@ -24,6 +27,28 @@ pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # 既存
+    "C90",           # mccabe（循環的複雑度）
+    "PLR",           # pylint refactor（引数過多、分岐過多等）
+    "N",             # naming
+    "B",             # bugbear（潜在バグ）
+    "ANN",           # 型アノテーション必須化
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 6
+max-branches = 12
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+disallow_untyped_defs = true
 
 [build-system]
 requires = ["hatchling"]

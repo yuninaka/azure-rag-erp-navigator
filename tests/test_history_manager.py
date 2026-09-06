@@ -10,7 +10,7 @@ def _manager() -> SessionHistoryManager:
     return SessionHistoryManager(FakeCosmosContainer(), session_ttl_seconds=3600)
 
 
-def test_start_session_creates_meta_once_and_is_idempotent():
+def test_start_session_creates_meta_once_and_is_idempotent() -> None:
     manager = _manager()
 
     first = manager.start_session("session-1")
@@ -20,7 +20,7 @@ def test_start_session_creates_meta_once_and_is_idempotent():
     assert first["created_at"] == second["created_at"]
 
 
-def test_start_session_recovers_from_concurrent_creation_race():
+def test_start_session_recovers_from_concurrent_creation_race() -> None:
     container = FakeCosmosContainer()
     manager = SessionHistoryManager(container, session_ttl_seconds=3600)
     concurrent_meta = {
@@ -39,7 +39,7 @@ def test_start_session_recovers_from_concurrent_creation_race():
     assert result == concurrent_meta
 
 
-def test_append_turn_assigns_sequential_indices_and_updates_turn_count():
+def test_append_turn_assigns_sequential_indices_and_updates_turn_count() -> None:
     manager = _manager()
 
     turn0 = manager.append_turn("session-1", "質問1", "回答1")
@@ -48,10 +48,11 @@ def test_append_turn_assigns_sequential_indices_and_updates_turn_count():
     assert turn0.turn_index == 0
     assert turn1.turn_index == 1
     meta = manager.start_session("session-1")
-    assert meta["turn_count"] == 2
+    expected_turn_count = 2
+    assert meta["turn_count"] == expected_turn_count
 
 
-def test_append_turn_without_prior_start_session_still_works():
+def test_append_turn_without_prior_start_session_still_works() -> None:
     manager = _manager()
 
     turn = manager.append_turn("new-session", "初回質問", "初回回答")
@@ -59,7 +60,7 @@ def test_append_turn_without_prior_start_session_still_works():
     assert turn.turn_index == 0
 
 
-def test_get_history_returns_turns_in_order_with_citations():
+def test_get_history_returns_turns_in_order_with_citations() -> None:
     manager = _manager()
     citations = [
         Citation(
@@ -79,7 +80,7 @@ def test_get_history_returns_turns_in_order_with_citations():
     assert history[1].citations == []
 
 
-def test_get_history_respects_max_turns():
+def test_get_history_respects_max_turns() -> None:
     manager = _manager()
     for i in range(5):
         manager.append_turn("session-1", f"質問{i}", f"回答{i}")
@@ -89,7 +90,9 @@ def test_get_history_respects_max_turns():
     assert [t.user_message for t in history] == ["質問3", "質問4"]
 
 
-def test_append_turn_logs_and_reraises_when_turn_count_patch_fails(caplog):
+def test_append_turn_logs_and_reraises_when_turn_count_patch_fails(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     container = FakeCosmosContainer()
     manager = SessionHistoryManager(container, session_ttl_seconds=3600)
     container.fail_next_patch_item()
@@ -103,7 +106,7 @@ def test_append_turn_logs_and_reraises_when_turn_count_patch_fails(caplog):
     assert stored_turn["user_message"] == "質問1"
 
 
-def test_build_chat_messages_alternates_user_and_assistant_roles():
+def test_build_chat_messages_alternates_user_and_assistant_roles() -> None:
     manager = _manager()
     manager.append_turn("session-1", "質問1", "回答1")
     manager.append_turn("session-1", "質問2", "回答2")

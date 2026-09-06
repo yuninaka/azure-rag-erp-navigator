@@ -3,11 +3,11 @@ from src.rag.search_client import DEFAULT_TOP_K, SearchHit, hybrid_search
 
 
 class _FakeSearchClient:
-    def __init__(self, results: list[dict]):
+    def __init__(self, results: list[dict]) -> None:
         self._results = results
         self.last_call_kwargs: dict | None = None
 
-    def search(self, **kwargs):
+    def search(self, **kwargs: object) -> list[dict]:
         self.last_call_kwargs = kwargs
         return self._results
 
@@ -21,7 +21,7 @@ RAW_RESULT = {
 }
 
 
-def test_hybrid_search_maps_raw_results_to_search_hits():
+def test_hybrid_search_maps_raw_results_to_search_hits() -> None:
     client = _FakeSearchClient([RAW_RESULT])
 
     hits = hybrid_search(client, "テナント作成の手順", [0.1, 0.2, 0.3])
@@ -37,7 +37,7 @@ def test_hybrid_search_maps_raw_results_to_search_hits():
     ]
 
 
-def test_hybrid_search_uses_hybrid_query_with_default_strategy_and_top():
+def test_hybrid_search_uses_hybrid_query_with_default_strategy_and_top() -> None:
     client = _FakeSearchClient([])
 
     hybrid_search(client, "質問", [0.1, 0.2])
@@ -52,12 +52,13 @@ def test_hybrid_search_uses_hybrid_query_with_default_strategy_and_top():
     assert kwargs["vector_queries"][0].fields == "content_vector"
 
 
-def test_hybrid_search_respects_custom_chunk_strategy_and_top():
+def test_hybrid_search_respects_custom_chunk_strategy_and_top() -> None:
     client = _FakeSearchClient([])
+    custom_top = 3
 
-    hybrid_search(client, "質問", [0.1], top=3, chunk_strategy=FIXED_512)
+    hybrid_search(client, "質問", [0.1], top=custom_top, chunk_strategy=FIXED_512)
 
     kwargs = client.last_call_kwargs
     assert kwargs["filter"] == f"chunk_strategy eq '{FIXED_512}'"
-    assert kwargs["top"] == 3
-    assert kwargs["vector_queries"][0].k_nearest_neighbors == 3
+    assert kwargs["top"] == custom_top
+    assert kwargs["vector_queries"][0].k_nearest_neighbors == custom_top

@@ -8,6 +8,7 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, TypedDict, cast
 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
@@ -19,6 +20,20 @@ from src.ingestion.document_loader import SourceDocument, load_source_documents
 from src.ingestion.embed import embed_texts
 
 EmbedFn = Callable[[list[str]], list[list[float]]]
+
+
+class SearchDocument(TypedDict):
+    id: str
+    content: str
+    content_vector: list[float]
+    title: str
+    section_path: str
+    source_type: str
+    source_file: str
+    module_tags: list[str]
+    chunk_index: int
+    chunk_strategy: str
+    last_updated: str
 
 
 def _document_id(source_file: str, strategy: str, chunk_index: int) -> str:
@@ -34,13 +49,13 @@ def build_search_documents(
     documents: list[SourceDocument],
     strategy: str,
     embed_fn: EmbedFn,
-) -> list[dict]:
+) -> list[SearchDocument]:
     """`documents` を指定戦略でチャンク化し、埋め込み付きのSearch投入用ドキュメントを作る。"""
     chunks_by_doc = [(doc, chunk_by_strategy(doc.body, strategy)) for doc in documents]
     all_texts = [chunk.content for _, chunks in chunks_by_doc for chunk in chunks]
     vectors = embed_fn(all_texts)
 
-    search_documents = []
+    search_documents: list[SearchDocument] = []
     vector_index = 0
     for doc, chunks in chunks_by_doc:
         for chunk in chunks:
@@ -87,6 +102,8 @@ def run_ingestion(data_dir: Path, strategies: list[str] | None = None) -> dict[s
     uploaded_counts: dict[str, int] = {}
     for strategy in strategies:
         search_documents = build_search_documents(documents, strategy, embed_fn)
-        results = search_client.upload_documents(search_documents)
+        # upload_documentsは list[dict[Any, Any]]（無型・不変)を要求するため、
+        # SearchDocument(TypedDict)とは構造的に一致してもこの境界でだけcastする。
+        results = search_client.upload_documents(cast(list[dict[Any, Any]], search_documents))
         uploaded_counts[strategy] = sum(1 for result in results if result.succeeded)
     return uploaded_counts

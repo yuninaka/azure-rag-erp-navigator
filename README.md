@@ -108,6 +108,20 @@ uv sync
 
 `.env.example` をコピーして `.env` を作成し、Azure リソースの接続情報を設定してください（詳細は各ステップ実装時に追記）。
 
+### PR前の品質チェック
+
+コードを変更したら、PRを出す前に以下を実行し、緑になってから push してください。
+GitHub Actions（`.github/workflows/ci.yml`）でも同じスクリプトが自動的にもう一度実行されます。
+ローカルとCIでチェック内容を1つのスクリプトに集約しているため、「ローカルでは通ったのにCIで落ちる」
+という食い違いが起きません。
+
+```bash
+./scripts/ci_check.sh
+```
+
+（pytest / ruff / mypy / vulture をまとめて実行します。Azure実リソースへの疎通確認
+`scripts/verify_azure_connectivity.py` は含まれないため、必要な場合は別途手動で実行してください。）
+
 ### チャットUIの起動
 
 Azure OpenAI / AI Search / Cosmos DB への接続情報を `.env` に設定した上で、以下を実行してください。

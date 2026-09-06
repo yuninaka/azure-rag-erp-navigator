@@ -2,7 +2,7 @@ from src.app.formatting import format_citations_markdown
 from src.session.history_manager import Citation
 
 
-def test_format_citations_markdown_numbers_entries_in_order():
+def test_format_citations_markdown_numbers_entries_in_order() -> None:
     citations = [
         Citation(
             title="初期設定ガイド",
@@ -24,5 +24,5 @@ def test_format_citations_markdown_numbers_entries_in_order():
     )
 
 
-def test_format_citations_markdown_with_no_citations_returns_empty_string():
+def test_format_citations_markdown_with_no_citations_returns_empty_string() -> None:
     assert format_citations_markdown([]) == ""

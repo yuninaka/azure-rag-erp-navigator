@@ -68,7 +68,7 @@ def chunk_fixed(
         )
     headings = _extract_headings(body)
     tokens = _ENCODING.encode(body)
-    chunks = []
+    chunks: list[Chunk] = []
     for start, text in _fixed_token_windows(tokens, max_tokens, max_tokens - overlap_tokens):
         char_offset = len(_ENCODING.decode(tokens[:start]))
         chunks.append(
@@ -92,7 +92,7 @@ def chunk_heading_aware(body: str, *, strategy_name: str = HEADING_AWARE) -> lis
             )
         ]
     boundaries = [offset for offset, _, _ in headings] + [len(body)]
-    chunks = []
+    chunks: list[Chunk] = []
     for start, end in pairwise(boundaries):
         content = body[start:end].strip()
         if not content:

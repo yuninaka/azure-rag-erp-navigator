@@ -18,7 +18,7 @@ def _fake_embed_fn(texts: list[str]) -> list[list[float]]:
     return [[float(len(text))] for text in texts]
 
 
-def test_build_search_documents_shapes_fields_for_search_index():
+def test_build_search_documents_shapes_fields_for_search_index() -> None:
     documents = build_search_documents(SAMPLE_DOCUMENTS, FIXED_512, _fake_embed_fn)
 
     assert len(documents) == 1
@@ -34,7 +34,7 @@ def test_build_search_documents_shapes_fields_for_search_index():
     assert doc["content_vector"] == [float(len(doc["content"]))]
 
 
-def test_build_search_documents_assigns_embeddings_in_chunk_order():
+def test_build_search_documents_assigns_embeddings_in_chunk_order() -> None:
     two_docs = SAMPLE_DOCUMENTS + [
         SourceDocument(
             title="サンプルガイド2",

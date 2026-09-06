@@ -15,10 +15,10 @@ class _FakeEmbeddingResponse:
 
 
 class _FakeEmbeddingsResource:
-    def __init__(self):
+    def __init__(self) -> None:
         self.calls: list[list[str]] = []
 
-    def create(self, *, model: str, input: list[str]):
+    def create(self, *, model: str, input: list[str]) -> _FakeEmbeddingResponse:
         self.calls.append(list(input))
         items = [
             _FakeEmbeddingItem(index=i, embedding=[float(len(text)), float(i)])
@@ -28,11 +28,11 @@ class _FakeEmbeddingsResource:
 
 
 class _FakeAzureOpenAIClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self.embeddings = _FakeEmbeddingsResource()
 
 
-def test_embed_texts_batches_requests_and_preserves_input_order():
+def test_embed_texts_batches_requests_and_preserves_input_order() -> None:
     client = _FakeAzureOpenAIClient()
     texts = [f"text-{i}" for i in range(5)]
 
@@ -46,5 +46,6 @@ def test_embed_texts_batches_requests_and_preserves_input_order():
         [text_length, 1.0],
         [text_length, 0.0],
     ]
-    assert len(client.embeddings.calls) == 3  # 5件をbatch_size=2で処理 -> 2,2,1
+    expected_call_count = 3  # 5件をbatch_size=2で処理 -> 2,2,1
+    assert len(client.embeddings.calls) == expected_call_count
     assert client.embeddings.calls == [["text-0", "text-1"], ["text-2", "text-3"], ["text-4"]]

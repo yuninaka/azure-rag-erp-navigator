@@ -8,7 +8,7 @@ from src.ingestion.index_schema import (
 )
 
 
-def test_index_has_expected_field_names_and_key():
+def test_index_has_expected_field_names_and_key() -> None:
     index = build_search_index("erp-knowledge-index")
     field_names = {f.name for f in index.fields}
 
@@ -31,7 +31,7 @@ def test_index_has_expected_field_names_and_key():
     assert key_fields[0].name == "id"
 
 
-def test_content_vector_field_matches_embedding_model_dimensions():
+def test_content_vector_field_matches_embedding_model_dimensions() -> None:
     index = build_search_index("erp-knowledge-index")
     vector_field = next(f for f in index.fields if f.name == "content_vector")
 
@@ -40,7 +40,7 @@ def test_content_vector_field_matches_embedding_model_dimensions():
     assert vector_field.vector_search_profile_name == VECTOR_PROFILE_NAME
 
 
-def test_vector_search_profile_and_algorithm_are_linked():
+def test_vector_search_profile_and_algorithm_are_linked() -> None:
     index = build_search_index("erp-knowledge-index")
     profile = index.vector_search.profiles[0]
     algorithm = index.vector_search.algorithms[0]
@@ -49,7 +49,7 @@ def test_vector_search_profile_and_algorithm_are_linked():
     assert profile.algorithm_configuration_name == algorithm.name
 
 
-def test_semantic_configuration_uses_title_content_and_keywords_fields():
+def test_semantic_configuration_uses_title_content_and_keywords_fields() -> None:
     index = build_search_index("erp-knowledge-index")
     semantic_config = index.semantic_search.configurations[0]
 
@@ -61,7 +61,7 @@ def test_semantic_configuration_uses_title_content_and_keywords_fields():
     ]
 
 
-def test_filterable_fields_support_faceted_navigation():
+def test_filterable_fields_support_faceted_navigation() -> None:
     index = build_search_index("erp-knowledge-index")
     filterable_names = {f.name for f in index.fields if f.filterable}
 

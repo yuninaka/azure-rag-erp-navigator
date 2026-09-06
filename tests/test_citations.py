@@ -3,7 +3,7 @@ from src.rag.search_client import SearchHit
 from src.session.history_manager import Citation
 
 
-def test_build_citations_maps_search_hits_to_citation_objects():
+def test_build_citations_maps_search_hits_to_citation_objects() -> None:
     hits = [
         SearchHit(
             content="本文",
@@ -25,5 +25,5 @@ def test_build_citations_maps_search_hits_to_citation_objects():
     ]
 
 
-def test_build_citations_with_no_hits_returns_empty_list():
+def test_build_citations_with_no_hits_returns_empty_list() -> None:
     assert build_citations([]) == []
