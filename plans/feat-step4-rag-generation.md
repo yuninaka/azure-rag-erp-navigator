@@ -57,3 +57,21 @@ uv run python scripts/ask_question.py "その後、会計年度はいつ決め�
 - チャンク分割方針（`fixed_512`/`fixed_256`/`heading_aware`）ごとの回答精度の定量比較は
   Step 6（golden_qa評価）で実施する
 - チャットUI（Step 5）からの利用、複数ユーザーの同時利用を想定した負荷特性は未検証
+- **意図的に見送った項目**: `hybrid_search` の `VectorizedQuery.k_nearest_neighbors` と
+  最終結果件数 `top` を同じ値で共用している（セマンティックランカーに広めの候補を渡して
+  絞り込ませる、という設計にはしていない）。golden_qa評価（Step 6）を待たずに変更しても
+  精度への効果を検証する手段が今はないため、対応を見送った。Step 6以降で必要性が判明したら、
+  `k_nearest_neighbors` を `top` から分離するリファクタリングを行い、変更前後でgolden_qaスコアを
+  比較検証すること
+
+## コードレビュー対応（2026-09-06）
+
+- 🔴 `_format_context_entry` が `hit.title` と `hit.section_path` を両方連結しており、
+  `section_path` が既にタイトルを含む構造のため引用元表示でタイトルが二重表示されるバグを修正
+  （`scripts/ask_question.py` の引用元表示にも同じ重複が波及していたため併せて修正）
+- 🟡 `generate_answer` で `response.choices[0].message.content` が `None` になるケース
+  （コンテンツフィルタ作動時等）にフォールバック文言を返すよう対応。フォールバック時も
+  「その質問には回答できなかった」という事実を履歴に残す方針とし、保存自体はスキップしない
+- 🟡 `hybrid_search` のOData `$filter` 文字列組み立てについて、`chunk_strategy` が内部定数のみを
+  受け取る前提であることと、将来外部入力を受け付ける場合はエスケープ処理が必要になる旨をコメントで明記
+- 🟡 `k_nearest_neighbors`/`top`の分離は上記の通り見送り

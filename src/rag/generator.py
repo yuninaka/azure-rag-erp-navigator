@@ -12,6 +12,9 @@ from src.rag.search_client import DEFAULT_CHUNK_STRATEGY, DEFAULT_TOP_K, hybrid_
 from src.session.history_manager import Citation, SessionHistoryManager
 
 DEFAULT_HISTORY_TURNS = 5
+# コンテンツフィルタ作動時等、Azure OpenAIがcontent=Noneを返すケースのフォールバック文言。
+# 履歴には「その質問には回答できなかった」という事実として残す（保存自体はスキップしない）。
+FALLBACK_ANSWER = "回答を生成できませんでした。担当部署にお問い合わせください。"
 
 
 @dataclass(frozen=True)
@@ -46,7 +49,7 @@ def generate_answer(
         {"role": "user", "content": build_user_message(query, hits)},
     ]
     response = openai_client.chat.completions.create(model=chat_deployment, messages=messages)
-    answer = response.choices[0].message.content
+    answer = response.choices[0].message.content or FALLBACK_ANSWER
 
     history_manager.append_turn(session_id, query, answer, citations)
     return RagAnswer(answer=answer, citations=citations)

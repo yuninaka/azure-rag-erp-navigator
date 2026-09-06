@@ -44,6 +44,10 @@ def hybrid_search(
         vector_queries=[
             VectorizedQuery(vector=query_vector, k_nearest_neighbors=top, fields="content_vector")
         ],
+        # chunk_strategyは常にALL_STRATEGIES(内部定数)由来の値のみを受け取る前提で、
+        # ここは単純な文字列埋め込みでOData $filter を組み立てている。将来この関数が
+        # 外部入力(ユーザー指定のフィルタ値等)を受け付けるようになった場合は、
+        # OData用のエスケープ処理(シングルクォートの二重化等)を追加する必要がある。
         filter=f"chunk_strategy eq '{chunk_strategy}'",
         query_type="semantic",
         semantic_configuration_name=SEMANTIC_CONFIGURATION_NAME,
