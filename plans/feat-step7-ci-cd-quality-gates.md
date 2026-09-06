@@ -91,10 +91,16 @@ Azure実リソースへの疎通確認（`scripts/verify_azure_connectivity.py`�
 
 pytest 46件・ruff・mypyすべてPASS、vultureも指摘0件で完走した（exit code 0）。
 
+**GitHub Actions実行結果（2026-09-06）**: PR #8作成後、実際にCIワークフローが
+`pull_request`トリガーで起動し、39秒で全ステップ成功したことを確認した
+（`gh run watch`で確認。`uv sync`→`./scripts/ci_check.sh`まで問題なく完走）。
+Node.js 20の非推奨警告（`actions/checkout@v4`等がNode.js 24上で強制実行される旨）が
+出ているが、これはGitHub Actions基盤側の将来的な仕様変更に関する注意喚起であり、
+現時点でワークフローの動作には影響しない。
+
 ## 未確認・後続ステップに委ねる事項
 
 - Azure App Serviceへの実デプロイ、環境変数管理（App Service側のApplication Settings）、
   監視・ログ設計（Application Insights連携）は本PRの範囲外。別途Step7後半として対応する
-- GitHub Actionsのワークフローは`pull_request`トリガーのみで、実際にPRを作成してCI上での
-  動作確認はまだ行っていない（次のPR作成時に確認する）
+- vultureを将来ゲート化するかどうかは、誤検知の有無を見ながら再検討する
 - vultureを将来ゲート化するかどうかは、誤検知の有無を見ながら再検討する
