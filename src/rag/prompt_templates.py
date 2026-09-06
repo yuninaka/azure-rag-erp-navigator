@@ -14,7 +14,9 @@ SYSTEM_PROMPT = """あなたはERP／基幹システム「ERPNavi」の導入・
 
 
 def _format_context_entry(index: int, hit: SearchHit) -> str:
-    return f"[{index}] {hit.title} > {hit.section_path}\n{hit.content}"
+    # section_pathは見出しパスの先頭に既にtitle(H1)を含む(chunkers.pyの設計)ため、
+    # ここでhit.titleを前置するとタイトルが二重表示される。
+    return f"[{index}] {hit.section_path}\n{hit.content}"
 
 
 def build_user_message(query: str, hits: list[SearchHit]) -> str:

@@ -22,12 +22,18 @@ HITS = [
 def test_build_user_message_numbers_context_entries_in_order():
     message = build_user_message("初期設定はどこから始めますか？", HITS)
 
-    assert "[1] 初期設定ガイド > 初期設定ガイド > テナントの作成" in message
-    assert (
-        "[2] 会計モジュール設定ガイド > 会計モジュール設定ガイド > 勘定科目マスタの登録" in message
-    )
+    assert "[1] 初期設定ガイド > テナントの作成" in message
+    assert "[2] 会計モジュール設定ガイド > 勘定科目マスタの登録" in message
     assert message.index("[1]") < message.index("[2]")
     assert "### 質問\n初期設定はどこから始めますか？" in message
+
+
+def test_build_user_message_does_not_duplicate_title_before_section_path():
+    message = build_user_message("質問", HITS)
+
+    # section_pathは既にtitle(H1)を先頭に含むため、titleを重ねて前置してはいけない
+    assert "初期設定ガイド > 初期設定ガイド" not in message
+    assert "会計モジュール設定ガイド > 会計モジュール設定ガイド" not in message
 
 
 def test_build_user_message_with_no_hits_still_includes_question():

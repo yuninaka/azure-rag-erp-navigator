@@ -51,7 +51,7 @@ def main() -> int:
     print(f"\n回答:\n{result.answer}")
     print("\n引用元:")
     for i, citation in enumerate(result.citations, start=1):
-        print(f"  [{i}] {citation.title} > {citation.section_path} ({citation.source_file})")
+        print(f"  [{i}] {citation.section_path} ({citation.source_file})")
     return 0
 
 
