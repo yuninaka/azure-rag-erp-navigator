@@ -80,7 +80,7 @@ azure-rag-erp-navigator/
 
 - [x] Step 1: Azure AI Search インデックス設計（チャンク分割方針・メタデータスキーマ・ハイブリッド検索設定）
 - [x] Step 2: ダミー業務文書のチャンク化・埋め込み生成・インデックス投入パイプライン
-- [ ] Step 3: Cosmos DB での会話履歴・セッション管理
+- [x] Step 3: Cosmos DB での会話履歴・セッション管理
 - [ ] Step 4: RAG 回答生成ロジック（引用元提示含む）
 - [ ] Step 5: Streamlit チャットUI
 - [ ] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
