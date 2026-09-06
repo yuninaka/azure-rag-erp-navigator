@@ -1,5 +1,6 @@
 """ERPNavi サポートナビゲーター: 簡易チャットUI(Streamlit)。"""
 
+import logging
 import uuid
 
 import streamlit as st
@@ -9,9 +10,11 @@ from openai import AzureOpenAI
 
 from src.app.formatting import format_citations_markdown
 from src.config import load_azure_cosmos_config, load_azure_openai_config, load_azure_search_config
-from src.rag.generator import generate_answer
+from src.rag.generator import RagAnswer, generate_answer
 from src.session.cosmos_client import get_sessions_container
 from src.session.history_manager import SessionHistoryManager
+
+logger = logging.getLogger(__name__)
 
 # 業務担当者が「何を聞けるか分からない」まま離脱しないよう、代表的な質問例を
 # サイドバーにワンクリックで試せる形で提示する。
@@ -20,6 +23,10 @@ EXAMPLE_QUESTIONS = [
     "在庫の発注点アラートが届かない場合はどうすればいいですか？",
     "月次締め処理ができないときの原因は何ですか？",
 ]
+
+# 例外の詳細(Azure SDKのエラーメッセージ等)を業務担当者向け画面にそのまま出さないための
+# 固定文言。詳細はlogger.exceptionでサーバー側ログにのみ残す。
+USER_FACING_ERROR_MESSAGE = "エラーが発生しました。担当部署にお問い合わせください。"
 
 st.set_page_config(page_title="ERPNavi サポートナビゲーター", page_icon="🧭")
 
@@ -77,6 +84,21 @@ def _render_history() -> None:
                     st.markdown(message["citations_markdown"])
 
 
+def _generate_answer_safely(
+    *, query: str, session_id: str, generate_answer_fn=generate_answer, **kwargs
+) -> RagAnswer | None:
+    """`generate_answer`を呼び出し、失敗時は詳細をログにのみ残してNoneを返す。
+
+    Streamlitの描画呼び出し(`st.*`)を含まないため、`generate_answer_fn`を差し替えれば
+    実際のAzure接続なしに例外処理の分岐だけを単体テストできる。
+    """
+    try:
+        return generate_answer_fn(query=query, session_id=session_id, **kwargs)
+    except Exception:
+        logger.exception("RAG回答生成に失敗しました (session_id=%s)", session_id)
+        return None
+
+
 def _handle_query(query: str) -> None:
     openai_client, openai_config, search_client, history_manager = _load_clients()
 
@@ -85,32 +107,34 @@ def _handle_query(query: str) -> None:
         st.markdown(query)
 
     with st.chat_message("assistant"), st.spinner("回答を生成しています..."):
-        try:
-            result = generate_answer(
-                query=query,
-                session_id=st.session_state.session_id,
-                openai_client=openai_client,
-                embedding_deployment=openai_config.embedding_deployment,
-                chat_deployment=openai_config.chat_deployment,
-                search_client=search_client,
-                history_manager=history_manager,
-            )
-            citations_markdown = format_citations_markdown(result.citations)
-            st.markdown(result.answer)
-            if citations_markdown:
-                with st.expander("引用元を表示"):
-                    st.markdown(citations_markdown)
+        result = _generate_answer_safely(
+            query=query,
+            session_id=st.session_state.session_id,
+            openai_client=openai_client,
+            embedding_deployment=openai_config.embedding_deployment,
+            chat_deployment=openai_config.chat_deployment,
+            search_client=search_client,
+            history_manager=history_manager,
+        )
+        if result is None:
+            st.error(USER_FACING_ERROR_MESSAGE)
             st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": result.answer,
-                    "citations_markdown": citations_markdown,
-                }
+                {"role": "assistant", "content": USER_FACING_ERROR_MESSAGE}
             )
-        except Exception as error:  # noqa: BLE001 - UI上でユーザーにエラーを提示する
-            error_message = f"エラーが発生しました。担当部署にお問い合わせください。({error})"
-            st.error(error_message)
-            st.session_state.messages.append({"role": "assistant", "content": error_message})
+            return
+
+        citations_markdown = format_citations_markdown(result.citations)
+        st.markdown(result.answer)
+        if citations_markdown:
+            with st.expander("引用元を表示"):
+                st.markdown(citations_markdown)
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": result.answer,
+                "citations_markdown": citations_markdown,
+            }
+        )
 
 
 def main() -> None:
@@ -130,4 +154,8 @@ def main() -> None:
         _handle_query(query)
 
 
-main()
+if __name__ == "__main__":
+    # Streamlitはスクリプトを常に __main__ として実行するため、このガードは
+    # `streamlit run` 経由の実行では機能しつつ、pytestからの通常importでは
+    # main()を実行させない(_generate_answer_safely等を副作用なく単体テストできる)。
+    main()
