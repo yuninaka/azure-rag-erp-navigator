@@ -10,52 +10,25 @@ import statistics
 import sys
 import uuid
 from pathlib import Path
-
-from azure.core.credentials import AzureKeyCredential
-from azure.search.documents import SearchClient
-from openai import AzureOpenAI
+from typing import Any
 
 from eval.dataset import GoldenQACase, load_golden_qa
 from eval.metrics import keyword_coverage
-from src.config import load_azure_cosmos_config, load_azure_openai_config, load_azure_search_config
 from src.ingestion.chunkers import ALL_STRATEGIES
+from src.rag.dependencies import RagDependencies, build_rag_dependencies
 from src.rag.generator import generate_answer
-from src.session.cosmos_client import get_sessions_container
-from src.session.history_manager import SessionHistoryManager
 
 GOLDEN_QA_PATH = Path(__file__).resolve().parent / "golden_qa.jsonl"
 RESULTS_PATH = Path(__file__).resolve().parent / "results.json"
 
 
-def _build_clients():
-    openai_config = load_azure_openai_config()
-    search_config = load_azure_search_config()
-    cosmos_config = load_azure_cosmos_config()
-
-    openai_client = AzureOpenAI(
-        azure_endpoint=openai_config.endpoint,
-        api_key=openai_config.api_key,
-        api_version=openai_config.api_version,
-    )
-    search_client = SearchClient(
-        search_config.endpoint, search_config.index_name, AzureKeyCredential(search_config.api_key)
-    )
-    history_manager = SessionHistoryManager(get_sessions_container(cosmos_config))
-    return openai_client, openai_config, search_client, history_manager
-
-
-def _evaluate_case(case: GoldenQACase, strategy: str, clients) -> dict:
-    openai_client, openai_config, search_client, history_manager = clients
+def _evaluate_case(case: GoldenQACase, strategy: str, deps: RagDependencies) -> dict[str, Any]:
     session_id = f"eval-{strategy}-{case['id']}-{uuid.uuid4().hex[:6]}"
 
     result = generate_answer(
         query=case["question"],
         session_id=session_id,
-        openai_client=openai_client,
-        embedding_deployment=openai_config.embedding_deployment,
-        chat_deployment=openai_config.chat_deployment,
-        search_client=search_client,
-        history_manager=history_manager,
+        deps=deps,
         chunk_strategy=strategy,
     )
     score = keyword_coverage(result.answer, case["expected_keywords"])
@@ -71,12 +44,12 @@ def _evaluate_case(case: GoldenQACase, strategy: str, clients) -> dict:
 
 def main() -> int:
     cases = load_golden_qa(GOLDEN_QA_PATH)
-    clients = _build_clients()
+    deps = build_rag_dependencies()
 
-    all_results: dict[str, list[dict]] = {}
+    all_results: dict[str, list[dict[str, Any]]] = {}
     for strategy in ALL_STRATEGIES:
         print(f"[{strategy}] {len(cases)}問を評価中...")
-        results = [_evaluate_case(case, strategy, clients) for case in cases]
+        results = [_evaluate_case(case, strategy, deps) for case in cases]
         all_results[strategy] = results
         avg = statistics.mean(r["score"] for r in results)
         print(f"  平均スコア: {avg:.2f}")

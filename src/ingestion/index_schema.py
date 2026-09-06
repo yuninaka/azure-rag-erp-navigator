@@ -35,7 +35,10 @@ def _build_fields() -> list[SearchField]:
         SearchableField(name="content", analyzer_name="ja.lucene"),
         SearchField(
             name="content_vector",
-            type=SearchFieldDataType.Collection(SearchFieldDataType.SINGLE),
+            # SearchFieldDataType.Collection はazure-search-documentsが実行時に
+            # monkey-patchで追加する staticmethod のため、mypyの静的解析からは
+            # Enumの呼び出しに見えてしまう（ライブラリ側の実装詳細で、当方では修正不可）。
+            type=SearchFieldDataType.Collection(SearchFieldDataType.SINGLE),  # type: ignore[operator]
             vector_search_dimensions=EMBEDDING_DIMENSIONS,
             vector_search_profile_name=VECTOR_PROFILE_NAME,
             searchable=True,
@@ -49,7 +52,8 @@ def _build_fields() -> list[SearchField]:
         SimpleField(name="source_file", type=SearchFieldDataType.STRING, filterable=True),
         SimpleField(
             name="module_tags",
-            type=SearchFieldDataType.Collection(SearchFieldDataType.STRING),
+            # 上記と同じ理由（Collectionはmonkey-patch由来のためmypyには見えない）。
+            type=SearchFieldDataType.Collection(SearchFieldDataType.STRING),  # type: ignore[operator]
             filterable=True,
             facetable=True,
         ),

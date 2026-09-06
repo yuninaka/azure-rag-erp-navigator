@@ -26,7 +26,7 @@ SAMPLE_MARKDOWN = """# タイトル
 """
 
 
-def test_heading_aware_splits_by_heading_with_nested_section_path():
+def test_heading_aware_splits_by_heading_with_nested_section_path() -> None:
     chunks = chunk_heading_aware(SAMPLE_MARKDOWN)
 
     assert [c.section_path for c in chunks] == [
@@ -40,7 +40,7 @@ def test_heading_aware_splits_by_heading_with_nested_section_path():
     assert chunks[0].content.startswith("# タイトル")
 
 
-def test_heading_aware_falls_back_to_single_chunk_when_no_headings():
+def test_heading_aware_falls_back_to_single_chunk_when_no_headings() -> None:
     body = "見出しのないプレーンな本文です。"
     chunks = chunk_heading_aware(body)
     assert len(chunks) == 1
@@ -48,13 +48,13 @@ def test_heading_aware_falls_back_to_single_chunk_when_no_headings():
     assert chunks[0].section_path == ""
 
 
-def test_heading_aware_skips_empty_sections_without_index_gaps():
+def test_heading_aware_skips_empty_sections_without_index_gaps() -> None:
     body = "# タイトル\n## 空のセクション\n## 本文があるセクション\n中身。"
     chunks = chunk_heading_aware(body)
     assert [c.chunk_index for c in chunks] == list(range(len(chunks)))
 
 
-def test_fixed_chunking_respects_max_token_budget_and_overlap():
+def test_fixed_chunking_respects_max_token_budget_and_overlap() -> None:
     body = "\n\n".join(
         f"これは{i}番目の文章です。ERPNaviの設定手順に関する説明が続きます。" for i in range(80)
     )
@@ -72,7 +72,7 @@ def test_fixed_chunking_respects_max_token_budget_and_overlap():
         assert len(_ENCODING.encode(chunk.content)) <= max_tokens
 
 
-def test_fixed_chunking_section_path_tracks_heading_position():
+def test_fixed_chunking_section_path_tracks_heading_position() -> None:
     section_a_text = "alpha " * 60
     section_b_text = "beta " * 60
     body = f"# Title\n\n## Section A\n{section_a_text}\n## Section B\n{section_b_text}"
@@ -95,12 +95,12 @@ def test_fixed_chunking_section_path_tracks_heading_position():
     assert last_a_index < first_b_index
 
 
-def test_chunk_fixed_rejects_overlap_greater_or_equal_to_max_tokens():
+def test_chunk_fixed_rejects_overlap_greater_or_equal_to_max_tokens() -> None:
     with pytest.raises(ValueError, match="overlap_tokens"):
         chunk_fixed("本文です。", max_tokens=10, overlap_tokens=10, strategy_name="test-strategy")
 
 
-def test_chunk_by_strategy_dispatches_known_strategies():
+def test_chunk_by_strategy_dispatches_known_strategies() -> None:
     body = "# タイトル\n\n本文です。"
 
     assert chunk_by_strategy(body, FIXED_512)[0].chunk_strategy == FIXED_512
@@ -108,6 +108,6 @@ def test_chunk_by_strategy_dispatches_known_strategies():
     assert chunk_by_strategy(body, HEADING_AWARE)[0].chunk_strategy == HEADING_AWARE
 
 
-def test_chunk_by_strategy_rejects_unknown_strategy():
+def test_chunk_by_strategy_rejects_unknown_strategy() -> None:
     with pytest.raises(ValueError, match="未知のチャンク戦略"):
         chunk_by_strategy("本文", "does-not-exist")

@@ -22,7 +22,7 @@ class SourceDocument:
     body: str
 
 
-def _split_frontmatter(raw_text: str) -> tuple[dict, str]:
+def _split_frontmatter(raw_text: str) -> tuple[dict[str, object], str]:
     if not raw_text.startswith("---\n"):
         raise ValueError("Markdownファイルの先頭にYAMLフロントマターがありません")
     _, frontmatter_text, body = raw_text.split("---\n", 2)
@@ -32,9 +32,15 @@ def _split_frontmatter(raw_text: str) -> tuple[dict, str]:
 
 def _load_document(path: Path, source_type: str) -> SourceDocument:
     metadata, body = _split_frontmatter(path.read_text(encoding="utf-8"))
+    title = metadata["title"]
+    module_tags = metadata["module_tags"]
+    if not isinstance(title, str):
+        raise TypeError(f"{path}: フロントマターの title は文字列である必要があります")
+    if not isinstance(module_tags, list):
+        raise TypeError(f"{path}: フロントマターの module_tags はリストである必要があります")
     return SourceDocument(
-        title=metadata["title"],
-        module_tags=metadata["module_tags"],
+        title=title,
+        module_tags=module_tags,
         last_updated=str(metadata["last_updated"]),
         source_type=source_type,
         source_file=path.name,
@@ -44,7 +50,7 @@ def _load_document(path: Path, source_type: str) -> SourceDocument:
 
 def load_source_documents(root_dir: Path) -> list[SourceDocument]:
     """`root_dir` 配下の manuals/faq/troubleshooting ディレクトリから文書を読み込む。"""
-    documents = []
+    documents: list[SourceDocument] = []
     for directory_name, source_type in _SOURCE_TYPE_BY_DIRECTORY.items():
         directory = root_dir / directory_name
         for path in sorted(directory.glob("*.md")):

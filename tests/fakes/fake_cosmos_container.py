@@ -6,7 +6,7 @@ from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosResourceNot
 
 
 class FakeCosmosContainer:
-    def __init__(self):
+    def __init__(self) -> None:
         self._items: dict[str, dict] = {}
         self._pending_concurrent_docs: dict[str, dict] = {}
         self._fail_next_patch_item = False

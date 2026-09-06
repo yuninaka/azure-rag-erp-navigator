@@ -33,6 +33,7 @@
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from typing import TypedDict, cast
 
 from azure.cosmos import ContainerProxy
 from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosResourceNotFoundError
@@ -42,6 +43,16 @@ logger = logging.getLogger(__name__)
 _SESSION_META_TYPE = "session_meta"
 _TURN_TYPE = "turn"
 DEFAULT_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30  # 30日
+
+
+class SessionMeta(TypedDict):
+    id: str
+    sessionId: str
+    type: str
+    created_at: str
+    last_active_at: str
+    turn_count: int
+    ttl: int
 
 
 @dataclass(frozen=True)
@@ -72,11 +83,19 @@ def _turn_document_id(session_id: str, turn_index: int) -> str:
 class SessionHistoryManager:
     def __init__(
         self, container: ContainerProxy, *, session_ttl_seconds: int = DEFAULT_SESSION_TTL_SECONDS
-    ):
+    ) -> None:
         self._container = container
         self._session_ttl_seconds = session_ttl_seconds
 
-    def start_session(self, session_id: str) -> dict:
+    def _read_session_meta(self, session_id: str) -> SessionMeta:
+        # Cosmos DBはスキーマレスなドキュメントストアのため、SDKの戻り値は
+        # 動的な Mapping になる。読み書き双方を本クラスが管理しており、
+        # 実際のドキュメント形状は SessionMeta と一致することが保証できるため、
+        # ここでのみ cast を使う（isinstanceで1フィールドずつ検証するのは過剰）。
+        raw = self._container.read_item(item=session_id, partition_key=session_id)
+        return cast(SessionMeta, dict(raw))
+
+    def start_session(self, session_id: str) -> SessionMeta:
         """セッションメタデータを取得する。なければ新規作成する（冪等）。
 
         同一 session_id への初回アクセスがほぼ同時に複数来た場合、両方が
@@ -86,11 +105,11 @@ class SessionHistoryManager:
         読み直して返す。
         """
         try:
-            return dict(self._container.read_item(item=session_id, partition_key=session_id))
+            return self._read_session_meta(session_id)
         except CosmosResourceNotFoundError:
             pass
         now = _now_iso()
-        meta = {
+        meta: SessionMeta = {
             "id": session_id,
             "sessionId": session_id,
             "type": _SESSION_META_TYPE,
@@ -100,9 +119,9 @@ class SessionHistoryManager:
             "ttl": self._session_ttl_seconds,
         }
         try:
-            self._container.create_item(meta)
+            self._container.create_item(dict(meta))
         except CosmosResourceExistsError:
-            return dict(self._container.read_item(item=session_id, partition_key=session_id))
+            return self._read_session_meta(session_id)
         return meta
 
     def append_turn(
@@ -165,7 +184,10 @@ class SessionHistoryManager:
         """セッションの全ターンをターン番号順に返す。`max_turns` 指定時は直近N件のみ。"""
         items = list(
             self._container.query_items(
-                query="SELECT * FROM c WHERE c.sessionId=@sid AND c.type=@type ORDER BY c.turn_index ASC",
+                query=(
+                    "SELECT * FROM c WHERE c.sessionId=@sid AND c.type=@type "
+                    "ORDER BY c.turn_index ASC"
+                ),
                 parameters=[
                     {"name": "@sid", "value": session_id},
                     {"name": "@type", "value": _TURN_TYPE},

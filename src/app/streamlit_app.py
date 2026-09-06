@@ -2,17 +2,13 @@
 
 import logging
 import uuid
+from collections.abc import Callable
 
 import streamlit as st
-from azure.core.credentials import AzureKeyCredential
-from azure.search.documents import SearchClient
-from openai import AzureOpenAI
 
 from src.app.formatting import format_citations_markdown
-from src.config import load_azure_cosmos_config, load_azure_openai_config, load_azure_search_config
+from src.rag.dependencies import RagDependencies, build_rag_dependencies
 from src.rag.generator import RagAnswer, generate_answer
-from src.session.cosmos_client import get_sessions_container
-from src.session.history_manager import SessionHistoryManager
 
 logger = logging.getLogger(__name__)
 
@@ -32,21 +28,8 @@ st.set_page_config(page_title="ERPNavi サポートナビゲーター", page_ico
 
 
 @st.cache_resource
-def _load_clients():
-    openai_config = load_azure_openai_config()
-    search_config = load_azure_search_config()
-    cosmos_config = load_azure_cosmos_config()
-
-    openai_client = AzureOpenAI(
-        azure_endpoint=openai_config.endpoint,
-        api_key=openai_config.api_key,
-        api_version=openai_config.api_version,
-    )
-    search_client = SearchClient(
-        search_config.endpoint, search_config.index_name, AzureKeyCredential(search_config.api_key)
-    )
-    history_manager = SessionHistoryManager(get_sessions_container(cosmos_config))
-    return openai_client, openai_config, search_client, history_manager
+def _load_dependencies() -> RagDependencies:
+    return build_rag_dependencies()
 
 
 def _new_session_id() -> str:
@@ -85,7 +68,11 @@ def _render_history() -> None:
 
 
 def _generate_answer_safely(
-    *, query: str, session_id: str, generate_answer_fn=generate_answer, **kwargs
+    *,
+    query: str,
+    session_id: str,
+    deps: RagDependencies,
+    generate_answer_fn: Callable[..., RagAnswer] = generate_answer,
 ) -> RagAnswer | None:
     """`generate_answer`を呼び出し、失敗時は詳細をログにのみ残してNoneを返す。
 
@@ -93,14 +80,14 @@ def _generate_answer_safely(
     実際のAzure接続なしに例外処理の分岐だけを単体テストできる。
     """
     try:
-        return generate_answer_fn(query=query, session_id=session_id, **kwargs)
+        return generate_answer_fn(query=query, session_id=session_id, deps=deps)
     except Exception:
         logger.exception("RAG回答生成に失敗しました (session_id=%s)", session_id)
         return None
 
 
 def _handle_query(query: str) -> None:
-    openai_client, openai_config, search_client, history_manager = _load_clients()
+    deps = _load_dependencies()
 
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
@@ -110,11 +97,7 @@ def _handle_query(query: str) -> None:
         result = _generate_answer_safely(
             query=query,
             session_id=st.session_state.session_id,
-            openai_client=openai_client,
-            embedding_deployment=openai_config.embedding_deployment,
-            chat_deployment=openai_config.chat_deployment,
-            search_client=search_client,
-            history_manager=history_manager,
+            deps=deps,
         )
         if result is None:
             st.error(USER_FACING_ERROR_MESSAGE)
