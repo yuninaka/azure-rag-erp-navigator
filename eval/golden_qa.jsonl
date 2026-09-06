@@ -1,0 +1,18 @@
+{"id": "q01", "category": "initial_setup", "question": "ERPNaviのテナントを新規作成するには何が必要ですか？", "expected_keywords": ["テナント発行コード", "会社名", "法人番号", "主契約管理者"]}
+{"id": "q02", "category": "initial_setup", "question": "会計年度の開始月はいつまでに確定させる必要がありますか？", "expected_keywords": ["初期設定", "会計モジュール設定後", "整合性"]}
+{"id": "q03", "category": "initial_setup", "question": "部門コードの命名規則はどのようにすればよいですか？", "expected_keywords": ["拠点コード", "部門連番"]}
+{"id": "q04", "category": "user_management", "question": "ユーザーを一括登録する方法はありますか？", "expected_keywords": ["CSV", "インポート"]}
+{"id": "q05", "category": "user_management", "question": "SSO連携を有効化する際に注意すべきことは何ですか？", "expected_keywords": ["緊急ログインアカウント", "IdP"]}
+{"id": "q06", "category": "user_management", "question": "パスワードポリシーのデフォルト設定を教えてください。", "expected_keywords": ["10文字", "90日", "5回"]}
+{"id": "q07", "category": "inventory", "question": "在庫の発注点アラートが届かない場合、まず何を確認すべきですか？", "expected_keywords": ["カテゴリ設定", "担当者グループ"]}
+{"id": "q08", "category": "inventory", "question": "棚卸し確定後に差異が見つかった場合、どうなりますか？", "expected_keywords": ["棚卸差異", "差異調整仕訳"]}
+{"id": "q09", "category": "accounting", "question": "月次締め処理を実行するための前提条件は何ですか？", "expected_keywords": ["承認済み", "棚卸差異調整仕訳", "未検収発注"]}
+{"id": "q10", "category": "accounting", "question": "仕訳承認フローで100万円以上の仕訳は誰の承認が必要ですか？", "expected_keywords": ["部門長承認", "経理部長承認"]}
+{"id": "q11", "category": "accounting", "question": "インボイス制度に対応するために会社情報に登録すべきものは何ですか？", "expected_keywords": ["適格請求書発行事業者登録番号"]}
+{"id": "q12", "category": "purchasing", "question": "発注を確定した後にキャンセルできる期限はありますか？", "expected_keywords": ["24時間"]}
+{"id": "q13", "category": "purchasing", "question": "入荷検品でNGとなった品物はどうなりますか？", "expected_keywords": ["返品待ち", "仮想倉庫"]}
+{"id": "q14", "category": "purchasing", "question": "新規仕入先を登録する際に必須のチェックは何ですか？", "expected_keywords": ["コンプライアンスチェック", "反社会的勢力"]}
+{"id": "q15", "category": "purchasing", "question": "支払サイトを変更した場合、既存の買掛金にも適用されますか？", "expected_keywords": ["遡及適用"]}
+{"id": "q16", "category": "troubleshooting", "question": "SSO連携後にログインできなくなった事例の原因は何でしたか？", "expected_keywords": ["緊急ログインアカウント", "証明書"]}
+{"id": "q17", "category": "troubleshooting", "question": "月次締め処理が「未検収発注あり」で進まない場合の対処法は？", "expected_keywords": ["取消", "未検収発注"]}
+{"id": "q18", "category": "troubleshooting", "question": "棚卸差異調整仕訳が起票されない原因として何が考えられますか？", "expected_keywords": ["原価区分", "マッピング"]}
