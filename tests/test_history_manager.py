@@ -1,3 +1,7 @@
+import logging
+
+import pytest
+
 from src.session.history_manager import Citation, SessionHistoryManager
 from tests.fakes.fake_cosmos_container import FakeCosmosContainer
 
@@ -14,6 +18,25 @@ def test_start_session_creates_meta_once_and_is_idempotent():
 
     assert first["turn_count"] == 0
     assert first["created_at"] == second["created_at"]
+
+
+def test_start_session_recovers_from_concurrent_creation_race():
+    container = FakeCosmosContainer()
+    manager = SessionHistoryManager(container, session_ttl_seconds=3600)
+    concurrent_meta = {
+        "id": "session-race",
+        "sessionId": "session-race",
+        "type": "session_meta",
+        "created_at": "2026-01-01T00:00:00+00:00",
+        "last_active_at": "2026-01-01T00:00:00+00:00",
+        "turn_count": 0,
+        "ttl": 3600,
+    }
+    container.simulate_concurrent_create("session-race", concurrent_meta)
+
+    result = manager.start_session("session-race")
+
+    assert result == concurrent_meta
 
 
 def test_append_turn_assigns_sequential_indices_and_updates_turn_count():
@@ -64,6 +87,20 @@ def test_get_history_respects_max_turns():
     history = manager.get_history("session-1", max_turns=2)
 
     assert [t.user_message for t in history] == ["質問3", "質問4"]
+
+
+def test_append_turn_logs_and_reraises_when_turn_count_patch_fails(caplog):
+    container = FakeCosmosContainer()
+    manager = SessionHistoryManager(container, session_ttl_seconds=3600)
+    container.fail_next_patch_item()
+
+    with caplog.at_level(logging.WARNING), pytest.raises(ConnectionError):
+        manager.append_turn("session-1", "質問1", "回答1")
+
+    assert any("turn_count" in record.message for record in caplog.records)
+    # ターン本体はcreate_item済みのため、コンテナ上には保存されている
+    stored_turn = container.read_item(item="session-1-0000", partition_key="session-1")
+    assert stored_turn["user_message"] == "質問1"
 
 
 def test_build_chat_messages_alternates_user_and_assistant_roles():

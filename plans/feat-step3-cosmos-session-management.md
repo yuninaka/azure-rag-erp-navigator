@@ -69,5 +69,12 @@ uv run python scripts/measure_session_latency.py
 ## 未確認・後続ステップに委ねる事項
 
 - `build_chat_messages` の実際の消費（Azure OpenAIへの受け渡し）はStep 4で実装する
-- Transactional Batchによるターン作成とメタ更新の一括化は本ステップでは行っていない
-  （小規模な検証用途では複雑さに見合わないと判断したが、本番運用を想定する場合は検討余地あり）
+- **既知のリスク（未対応）**: `append_turn` はターン本体の `create_item` →
+  メタデータの `turn_count` の `patch_item` を直列実行しており、Transactional Batchによる
+  一括化は行っていない。後者の `patch_item` が（ネットワーク瞬断・スロットリング等で）
+  失敗すると、ターンドキュメントは保存済みなのに `turn_count` が更新されず、
+  次回の `append_turn` が同じ `turn_index` を採番して `create_item` が409 Conflictで
+  失敗する不整合が起こり得る。小規模な検証用途では、この複雑さ（Transactional Batch導入）に
+  見合わないと判断し、本ステップでは対応を見送った。本番運用を想定する場合は、
+  Transactional Batchでの原子的な実行、またはpatch失敗時のリトライ＋turn_index重複検知の
+  導入を検討すべき
