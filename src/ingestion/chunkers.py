@@ -62,6 +62,10 @@ def chunk_fixed(
     body: str, *, max_tokens: int, overlap_tokens: int, strategy_name: str
 ) -> list[Chunk]:
     """トークン数固定・オーバーラップありでチャンク分割する。"""
+    if overlap_tokens >= max_tokens:
+        raise ValueError(
+            f"overlap_tokens({overlap_tokens})はmax_tokens({max_tokens})未満である必要があります"
+        )
     headings = _extract_headings(body)
     tokens = _ENCODING.encode(body)
     chunks = []
@@ -79,8 +83,14 @@ def chunk_fixed(
 
 
 def chunk_heading_aware(body: str, *, strategy_name: str = HEADING_AWARE) -> list[Chunk]:
-    """Markdownの見出し単位でチャンク分割する。"""
+    """Markdownの見出し単位でチャンク分割する。見出しが1つもない本文は全体を1チャンクとする。"""
     headings = _extract_headings(body)
+    if not headings:
+        return [
+            Chunk(
+                content=body.strip(), section_path="", chunk_index=0, chunk_strategy=strategy_name
+            )
+        ]
     boundaries = [offset for offset, _, _ in headings] + [len(body)]
     chunks = []
     for start, end in pairwise(boundaries):

@@ -21,7 +21,7 @@ flowchart TB
 
     subgraph AOAI["Azure OpenAI Service"]
         Embed["text-embedding-3-large<br/>(クエリ埋め込み)"]
-        GPT["GPT-4o<br/>(回答生成)"]
+        GPT["gpt-4.1-mini<br/>(回答生成、コスト効率重視で採用)"]
     end
 
     subgraph Search["Azure AI Search"]
@@ -55,6 +55,9 @@ flowchart TB
 
     Docs --> Chunk --> EmbedBatch -->|投入| Index
 ```
+
+> 回答生成モデルは `gpt-4o` ではなく `gpt-4.1-mini` を採用している（コスト効率を優先した選定。
+> 検証結果は `plans/` 配下の各ステップの計画ファイルを参照）。
 
 ## ディレクトリ構成
 

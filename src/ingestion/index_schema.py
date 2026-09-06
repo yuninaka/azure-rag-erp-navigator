@@ -20,7 +20,10 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
 )
 
-EMBEDDING_DIMENSIONS = 3072  # text-embedding-3-large の出力次元数
+# text-embedding-3-large(3072次元)を採用。small(1536次元)は当初デプロイされていたが、
+# 本フィールドの次元数と不一致で検索が機能しないことが実機検証で判明したため見送った
+# （経緯: plans/feat-step1-search-index-design.md の「教訓」参照）。
+EMBEDDING_DIMENSIONS = 3072
 VECTOR_ALGORITHM_NAME = "erp-hnsw-algorithm"
 VECTOR_PROFILE_NAME = "erp-vector-profile"
 SEMANTIC_CONFIGURATION_NAME = "erp-semantic-config"
