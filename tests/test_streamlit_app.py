@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from src.app.streamlit_app import _generate_answer_safely
+from src.app.streamlit_app import _generate_answer_safely, _load_dependencies_safely
 from src.rag.dependencies import RagDependencies
 from src.rag.generator import RagAnswer
 
@@ -52,3 +52,24 @@ def test_generate_answer_safely_returns_none_and_logs_on_failure(
     # logger.exception なので例外の詳細(traceback)はexc_infoとしてログレコードに残る
     assert error_record.exc_info is not None
     assert "boom: some Azure SDK internal detail" in str(error_record.exc_info[1])
+
+
+def test_load_dependencies_safely_returns_result_on_success() -> None:
+    result = _load_dependencies_safely(load_dependencies_fn=lambda: _DUMMY_DEPS)
+
+    assert result is _DUMMY_DEPS
+
+
+def test_load_dependencies_safely_returns_none_and_logs_on_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    def _raise() -> RagDependencies:
+        raise RuntimeError("missing env var: AZURE_SEARCH_INDEX_NAME")
+
+    with caplog.at_level(logging.ERROR):
+        result = _load_dependencies_safely(load_dependencies_fn=_raise)
+
+    assert result is None
+    error_record = next(r for r in caplog.records if "依存関係の初期化に失敗しました" in r.message)
+    assert error_record.exc_info is not None
+    assert "AZURE_SEARCH_INDEX_NAME" in str(error_record.exc_info[1])
