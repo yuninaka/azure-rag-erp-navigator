@@ -84,8 +84,8 @@ azure-rag-erp-navigator/
 - [x] Step 4: RAG 回答生成ロジック（引用元提示含む）
 - [x] Step 5: Streamlit チャットUI
 - [x] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
-- [ ] Step 7: Azure App Service デプロイ + GitHub Actions CI/CD
-- [ ] Step 8: Bicep による IaC 化
+- [x] Step 7: Azure App Service デプロイ + GitHub Actions CI/CD
+- [x] Step 8: Bicep による IaC 化
 - [ ] Zenn記事下書き・README整備
 
 ## セットアップ
@@ -152,3 +152,25 @@ uv run streamlit run src/app/streamlit_app.py
 監視・ログは、対象App Serviceの「Application Insights」を有効化するとリクエスト数・レスポンスタイム・
 例外が自動収集される。アプリケーションログ（ファイルシステム）を有効化すると、コード側の`logging`
 出力をログストリームで確認できる。詳細な設計判断は `plans/feat-step7-app-service-deploy.md` を参照。
+
+### IaC（Bicep）
+
+`infra/bicep/` に、Azure OpenAI / AI Search / Cosmos DB / App Service / 監視を一括
+プロビジョニングするBicepテンプレートを用意している（Step1〜7で個別にポータル作成した
+リソースを事後的にコード化したもの）。構文チェックのみで、実デプロイでの動作確認は
+まだ行っていない（詳細は `plans/feat-step8-bicep-iac.md` 参照）。
+
+```bash
+./scripts/validate_bicep.sh
+```
+
+実際にデプロイする場合は、`infra/bicep/parameters/dev.bicepparam` のモデル名・
+バージョンを、デプロイ時点でAzureポータル/CLIから確認した実在の値に書き換えてから
+以下を実行する。
+
+```bash
+az deployment group create \
+  --resource-group <リソースグループ名> \
+  --template-file infra/bicep/main.bicep \
+  --parameters infra/bicep/parameters/dev.bicepparam
+```
