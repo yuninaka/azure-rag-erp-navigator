@@ -70,11 +70,18 @@ azure-rag-erp-navigator/
 │   ├── rag/             # ハイブリッド検索・回答生成・引用元整形
 │   ├── session/         # Cosmos DB による会話履歴・セッション管理
 │   └── app/             # Streamlit チャットUI
-├── eval/                # golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
+├── eval/                # golden_qa 評価スクリプト（キーワード網羅率）
 ├── tests/               # pytest
-├── .github/workflows/   # CI/CD (GitHub Actions)
-└── docs/zenn-draft.md   # Zenn記事下書き
+└── .github/workflows/   # CI/CD (GitHub Actions)
 ```
+
+## Zenn記事（全3回シリーズ）
+
+この検証の記録は、[zenn-content](https://github.com/yuninaka/zenn-content)リポジトリで公開している（本リポジトリに下書きファイルは置かず、記事は公開先リポジトリで直接管理する運用にした）。
+
+- [第1回: 設計・インジェスト・セッション管理編](https://zenn.dev/yuninaka/articles/azure-rag-navigator-build)（Step1〜3、[`article-1-build-and-session-management`タグ](https://github.com/yuninaka/azure-rag-erp-navigator/tree/article-1-build-and-session-management)）
+- [第2回: RAG回答生成・チャットUI・精度評価編](https://zenn.dev/yuninaka/articles/azure-rag-navigator-eval)（Step4〜6、[`article-2-generation-and-eval`タグ](https://github.com/yuninaka/azure-rag-erp-navigator/tree/article-2-generation-and-eval)）
+- [第3回: デプロイ・CI/CD・IaC編](https://zenn.dev/yuninaka/articles/azure-rag-navigator-deploy)（Step7〜8、[`article-3-deploy-and-iac`タグ](https://github.com/yuninaka/azure-rag-erp-navigator/tree/article-3-deploy-and-iac)）
 
 ## 進捗ロードマップ
 
@@ -83,14 +90,12 @@ azure-rag-erp-navigator/
 - [x] Step 3: Cosmos DB での会話履歴・セッション管理
 - [x] Step 4: RAG 回答生成ロジック（引用元提示含む）
 - [x] Step 5: Streamlit チャットUI
-- [x] Step 6: golden_qa 評価スクリプト（キーワード網羅率 / RAGAS）
+- [x] Step 6: golden_qa 評価スクリプト（キーワード網羅率）
 - [x] Step 7: Azure App Service デプロイ + GitHub Actions CI/CD
 - [x] Step 8: Bicep による IaC 化
-- [ ] Zenn記事下書き・README整備
+- [x] Zenn記事（全3回）・README整備
 
 ## セットアップ
-
-> 各ステップの実装が進むにつれて随時更新します。
 
 ### 前提
 
