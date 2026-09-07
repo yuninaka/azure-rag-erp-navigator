@@ -93,12 +93,31 @@ Azure CLI/Azure AD経由のOIDC連携は上記のテナント事情で構築が�
 - `.github/workflows/cd.yml`: mainへのpushでApp Serviceへ自動デプロイ
 - `.gitignore`: デプロイ時生成物`requirements.txt`を除外
 
-## 動作確認
+## 動作確認（2026-09-07）
 
-（ユーザーによるApp Service作成・GitHub Secrets/Vars設定後に追記）
+`main`マージ後、CDワークフローが自動起動し3分34秒でデプロイ成功（`azure/webapps-deploy@v3`）。
+Playwright(ヘッドレスChromium)で実際のURL
+（`https://erp-navi-rag-demo-fbcvagdpbsa6fbha.japanwest-01.azurewebsites.net`）を操作して確認した。
+
+- デプロイ直後、Oryzビルド（`pip install -r requirements.txt`）中はHTTP応答がタイムアウトする
+  時間帯があったが、数十秒待つと初期画面（サイドバー・質問例）は正常に表示された
+- **実際に見つかったバグ**: 初回アクセス時、`AZURE_SEARCH_INDEX_NAME`のアプリケーション設定を
+  登録し忘れており、Streamlitのデフォルトの生トレースバック（ファイルパスを含む）が
+  そのまま画面に表示された。原因は`_load_dependencies()`の呼び出しが`_handle_query`の
+  `try/except`保護範囲の**外側**にあり、Step5で作った「エラー詳細を画面に出さない」設計が
+  適用されなかったため。環境変数を追加したところ解消した（後述の「未確認」に恒久対応を記録）
+- 環境変数修正後、実際に質問を送信し、Azure OpenAI(埋め込み+チャット、East US 2 EUAP)・
+  Azure AI Search・Cosmos DB（いずれもJapan East）への呼び出しを含めて **約16.5秒** で
+  回答と引用元が正しく表示されることを確認した（App Service自体はJapan West）。
+  リージョンを跨ぐ構成だが、体感できないほどの遅延ではなかった
+- ブラウザコンソール・ページエラーは検出されなかった
 
 ## 未確認・後続ステップに委ねる事項
 
+- **既知のバグ（未修正）**: `_load_dependencies()`（Azureクライアント初期化・設定読み込み）が
+  `_handle_query`の例外ハンドリング範囲外にあるため、設定不備等でここが失敗すると
+  Streamlitの生トレースバックがそのまま利用者に見える。`main()`全体を try/except で囲み、
+  Step5と同じ固定文言＋ログ出力にフォールバックする対応が必要（次PRで対応予定）
 - OIDC federated credentialsへの移行（発行プロファイルより安全）は、テナント側の
   Azure AD操作権限が整理できた時点で再検討する
 - 複数ユーザー同時アクセス時のB1プランでのスループット・レイテンシ特性は未検証

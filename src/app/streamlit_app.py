@@ -32,6 +32,22 @@ def _load_dependencies() -> RagDependencies:
     return build_rag_dependencies()
 
 
+def _load_dependencies_safely(
+    *, load_dependencies_fn: Callable[[], RagDependencies] = _load_dependencies
+) -> RagDependencies | None:
+    """`_load_dependencies`を呼び出し、失敗時は詳細をログにのみ残してNoneを返す。
+
+    設定不備（環境変数の未設定等）でここが失敗すると、素の例外がStreamlitの
+    デフォルトのトレースバック画面としてそのまま利用者に見えてしまうため、
+    `_generate_answer_safely`と同じ方針でガードする。
+    """
+    try:
+        return load_dependencies_fn()
+    except Exception:
+        logger.exception("依存関係の初期化に失敗しました")
+        return None
+
+
 def _new_session_id() -> str:
     return f"streamlit-{uuid.uuid4().hex[:8]}"
 
@@ -86,9 +102,7 @@ def _generate_answer_safely(
         return None
 
 
-def _handle_query(query: str) -> None:
-    deps = _load_dependencies()
-
+def _handle_query(query: str, deps: RagDependencies) -> None:
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
         st.markdown(query)
@@ -129,12 +143,17 @@ def main() -> None:
         "ERP導入・設定手順について質問できます。回答は参考情報に基づき、引用元を明示します。"
     )
 
+    deps = _load_dependencies_safely()
+    if deps is None:
+        st.error(USER_FACING_ERROR_MESSAGE)
+        return
+
     _render_history()
 
     pending_question = st.session_state.pop("pending_question", None)
     query = st.chat_input("質問を入力してください") or pending_question
     if query:
-        _handle_query(query)
+        _handle_query(query, deps)
 
 
 if __name__ == "__main__":
