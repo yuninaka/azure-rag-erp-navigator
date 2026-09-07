@@ -8,3 +8,6 @@ uv.lock.bak
 *.egg-info/
 .DS_Store
 infra/bicep/**/*.bicepparam.local
+# デプロイ時に uv.lock から生成する(scripts/ci_check.shやcd.ymlでは常に再生成するため
+# コミットしない。手元で `uv export` を試した際の副産物が紛れ込まないように)。
+requirements.txt
