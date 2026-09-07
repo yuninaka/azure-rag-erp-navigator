@@ -108,6 +108,10 @@ uv sync
 
 `.env.example` をコピーして `.env` を作成し、Azure リソースの接続情報を設定してください（詳細は各ステップ実装時に追記）。
 
+```bash
+cp .env.example .env
+```
+
 ### PR前の品質チェック
 
 コードを変更したら、PRを出す前に以下を実行し、緑になってから push してください。
@@ -132,6 +136,19 @@ uv run streamlit run src/app/streamlit_app.py
 
 ブラウザで http://localhost:8501 が開き、ERPNaviについて質問できます。
 
-```bash
-cp .env.example .env
-```
+### Azure App Serviceへのデプロイ
+
+1. Azureポータルで App Service（コード、Python 3.12、Linux、B1プラン以上を推奨）を作成する
+2. 対象App Serviceの「設定 > 全般設定」でスタートアップコマンドを設定する
+   ```
+   python -m streamlit run src/app/streamlit_app.py --server.port ${PORT:-8000} --server.address 0.0.0.0 --server.headless true
+   ```
+3. 「設定 > 環境変数」（アプリケーション設定）に、`.env.example` と同じキーで本番用の値を設定する
+4. アプリケーション設定に `SCM_DO_BUILD_DURING_DEPLOYMENT=true` を追加する（zip deploy後にOryxが`requirements.txt`からビルドするために必要）
+5. 「概要 > 発行プロファイルの取得」でファイルをダウンロードし、その内容をGitHub Secretsの `AZURE_WEBAPP_PUBLISH_PROFILE` に登録する
+6. GitHub Actions変数（Secretsではなく Variables）に `AZURE_WEBAPP_NAME` としてApp Service名を登録する
+7. `main` ブランチへのpush（PRマージ）で `.github/workflows/cd.yml` が自動的にデプロイする
+
+監視・ログは、対象App Serviceの「Application Insights」を有効化するとリクエスト数・レスポンスタイム・
+例外が自動収集される。アプリケーションログ（ファイルシステム）を有効化すると、コード側の`logging`
+出力をログストリームで確認できる。詳細な設計判断は `plans/feat-step7-app-service-deploy.md` を参照。
